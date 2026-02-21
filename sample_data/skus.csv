@@ -1,0 +1,9 @@
+sku_code,name,category,unit_cost,unit_price,reorder_point,safety_stock,lead_time_days,moq
+SKU-123,Wireless Mouse Pro,Peripherals,12.00,29.99,25,10,5,10
+SKU-088,Webcam 4K Autofocus,Cameras,60.00,149.99,15,5,7,5
+SKU-201,Laptop Stand Adjustable,Ergonomics,18.00,49.99,30,15,7,10
+SKU-447,USB-C Hub 7-Port,Hubs,14.00,34.99,40,20,6,20
+SKU-334,Desk Lamp LED Dimmable,Lighting,8.00,24.99,20,10,5,10
+SKU-892,Mechanical Keyboard TKL,Peripherals,35.00,89.99,30,15,8,5
+SKU-551,VGA-to-HDMI Adapter,Adapters,4.00,12.99,10,5,4,20
+SKU-719,Monitor Arm Dual,Ergonomics,22.00,59.99,15,8,7,5

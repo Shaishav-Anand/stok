@@ -1,0 +1,6 @@
+code,name,contact_email,avg_lead_time_days,on_time_delivery_rate,quality_rate,cost_variance_pct
+SUP-001,TechParts Ltd,orders@techparts.com,4.2,96.2,99.1,-2.1
+SUP-003,VisionTech Corp,supply@visiontech.com,6.8,91.8,98.5,0.4
+SUP-007,ErgoWorks Inc,procurement@ergoworks.com,7.1,88.4,97.2,1.2
+SUP-012,OldTech Supplies,sales@oldtech.com,11.3,77.0,94.8,3.8
+SUP-009,GlobalHub Co,orders@globalhub.com,9.5,82.3,96.4,0.8
