@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
+from services.auth import authenticate_user, create_access_token, hash_password, get_current_user
 import models, schemas
-from services.auth import authenticate_user, create_access_token, hash_password
+import uuid
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -23,11 +24,9 @@ def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/register")
 def register(data: schemas.LoginRequest, name: str = "Manager", db: Session = Depends(get_db)):
-    """First-time setup only — register a manager account"""
     existing = db.query(models.User).filter(models.User.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
-    import uuid
     user = models.User(
         id=str(uuid.uuid4()),
         email=data.email,
@@ -41,7 +40,10 @@ def register(data: schemas.LoginRequest, name: str = "Manager", db: Session = De
 
 
 @router.delete("/reset-all")
-def reset_all_data(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def reset_all_data(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """Delete all inventory data. Keeps user accounts."""
     from sqlalchemy import text
     tables = [
