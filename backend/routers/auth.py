@@ -38,3 +38,18 @@ def register(data: schemas.LoginRequest, name: str = "Manager", db: Session = De
     db.add(user)
     db.commit()
     return {"message": "Account created", "email": data.email}
+
+
+@router.delete("/reset-all")
+def reset_all_data(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """Delete all inventory data. Keeps user accounts."""
+    from sqlalchemy import text
+    tables = [
+        "audit_log", "pending_actions", "forecast_cache",
+        "sales_history", "inventory", "sku_suppliers",
+        "skus", "suppliers"
+    ]
+    for table in tables:
+        db.execute(text(f"DELETE FROM {table}"))
+    db.commit()
+    return {"message": "All data cleared. You can now upload fresh CSVs."}
