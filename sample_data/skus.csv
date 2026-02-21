@@ -1,9 +1,26 @@
 sku_code,name,category,unit_cost,unit_price,reorder_point,safety_stock,lead_time_days,moq
-SKU-123,Wireless Mouse Pro,Peripherals,12.00,29.99,25,10,5,10
-SKU-088,Webcam 4K Autofocus,Cameras,60.00,149.99,15,5,7,5
-SKU-201,Laptop Stand Adjustable,Ergonomics,18.00,49.99,30,15,7,10
-SKU-447,USB-C Hub 7-Port,Hubs,14.00,34.99,40,20,6,20
-SKU-334,Desk Lamp LED Dimmable,Lighting,8.00,24.99,20,10,5,10
-SKU-892,Mechanical Keyboard TKL,Peripherals,35.00,89.99,30,15,8,5
-SKU-551,VGA-to-HDMI Adapter,Adapters,4.00,12.99,10,5,4,20
-SKU-719,Monitor Arm Dual,Ergonomics,22.00,59.99,15,8,7,5
+SHOE-001,Men's Running Shoes - AirFlow,Men's Footwear,28.50,59.99,12,6,10,6
+SHOE-002,Women's Trail Runners - TerraGrip,Women's Footwear,26.00,54.99,10,5,8,5
+SHOE-003,Kids' Lightweight Sneakers - StarRunner,Kids' Footwear,15.00,32.99,18,9,7,10
+SHOE-004,Men's Leather Derby Shoes - Oxford,Men's Footwear,42.00,89.99,8,4,14,4
+SHOE-005,Women's Ballet Flats - SoftStep,Women's Footwear,18.50,39.99,15,7,6,8
+SHOE-006,Unisex Canvas Slip-Ons - BeachWalk,Casual Footwear,12.00,24.99,25,12,5,15
+SHOE-007,Men's Hiking Boots - SummitPro,Men's Footwear,55.00,119.99,6,3,15,3
+SHOE-008,Women's Ankle Boots - UrbanChic,Women's Footwear,48.00,99.99,7,3,12,4
+SHOE-009,Kids' Rain Boots - SplashGuard,Kids' Footwear,14.00,29.99,12,6,7,8
+SHOE-010,Men's Sandals - Breeze,Men's Footwear,16.00,34.99,20,10,5,12
+SHOE-011,Women's Wedge Sandals - SummerSky,Women's Footwear,22.00,44.99,12,6,9,6
+SHOE-012,Men's Basketball Shoes - HighTop Pro,Men's Footwear,62.00,129.99,5,2,12,3
+SHOE-013,Women's Slip-Resistant Clogs - WorkWise,Work Footwear,32.00,64.99,10,5,10,5
+SHOE-014,Kids' First Walkers - SoftSole,Baby Footwear,11.00,22.99,15,7,6,10
+SHOE-015,Men's Boat Shoes - Mariner,Men's Footwear,34.00,69.99,9,4,11,5
+SHOE-016,Women's Espadrilles - Canvas Chic,Women's Footwear,19.00,39.99,14,7,7,8
+SHOE-017,Men's Steel-Toe Work Boots - SafeGuard,Work Footwear,58.00,119.99,6,3,14,3
+SHOE-018,Women's Running Shoes - FlexFit,Women's Footwear,38.00,79.99,10,5,9,5
+SHOE-019,Kids' School Shoes - DuraStep,Kids' Footwear,20.00,39.99,18,9,8,12
+SHOE-020,Men's Slippers - CozyHome,Men's Footwear,12.50,24.99,20,10,4,12
+SHOE-021,Women's Slippers - PlushComfort,Women's Footwear,13.00,26.99,20,10,4,12
+SHOE-022,Unisex Flip-Flops - Island,Summer Footwear,5.00,9.99,40,20,3,24
+SHOE-023,Men's Golf Shoes - Fairway Pro,Sport Footwear,52.00,109.99,7,3,12,4
+SHOE-024,Women's Dance Sneakers - Rhythm,Sport Footwear,30.00,59.99,8,4,8,5
+SHOE-025,Toddler Soft Sole Shoes - BabySteps,Baby Footwear,9.00,18.99,12,6,5,10

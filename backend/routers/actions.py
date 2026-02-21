@@ -22,7 +22,9 @@ def get_actions(
 
     result = []
     for a in actions:
-        supplier = db.query(models.Supplier).filter(models.Supplier.id == a.supplier_id).first() if a.supplier_id else None
+        supplier = db.query(models.Supplier).filter(
+            models.Supplier.id == a.supplier_id
+        ).first() if a.supplier_id else None
         result.append(schemas.ActionOut(
             id=a.id,
             sku_id=a.sku_id,
@@ -51,13 +53,18 @@ def approve_action(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    action = db.query(models.PendingAction).filter(models.PendingAction.id == action_id).first()
+    action = db.query(models.PendingAction).filter(
+        models.PendingAction.id == action_id
+    ).first()
     if not action:
         raise HTTPException(404, "Action not found")
     if action.status != "pending":
         raise HTTPException(400, f"Action is already {action.status}")
 
-    modified = data.quantity_override is not None and data.quantity_override != action.recommended_qty
+    modified = (
+        data.quantity_override is not None and
+        data.quantity_override != action.recommended_qty
+    )
     if modified:
         action.recommended_qty = data.quantity_override
 
@@ -85,8 +92,7 @@ def approve_action(
     ))
     db.commit()
 
-    # In a real system: trigger external API call here (supplier PO, price update, etc.)
-    # For now, mark as executed immediately after approval
+    # ── Real execution: send email ─────────────────────────────────
     _execute_action(action, db, current_user)
 
     return {"message": "Action approved", "outcome": outcome}
@@ -99,7 +105,9 @@ def reject_action(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    action = db.query(models.PendingAction).filter(models.PendingAction.id == action_id).first()
+    action = db.query(models.PendingAction).filter(
+        models.PendingAction.id == action_id
+    ).first()
     if not action:
         raise HTTPException(404, "Action not found")
     if action.status != "pending":
@@ -125,18 +133,30 @@ def reject_action(
 
 
 def _execute_action(action: models.PendingAction, db: Session, user: models.User):
-    """
-    Placeholder for real execution.
-    Currently just logs the execution.
-    In production: call supplier API, update ERP, send PO email, etc.
-    """
+    """Real execution — sends email, logs result."""
+    sku = action.sku
+    supplier = db.query(models.Supplier).filter(
+        models.Supplier.id == action.supplier_id
+    ).first() if action.supplier_id else None
+
+    email_sent = False
+    try:
+        from services.email_service import send_purchase_order_email, send_markdown_email
+        if action.type == "order" and sku:
+            email_sent = send_purchase_order_email(action, sku, supplier)
+        elif action.type == "price" and sku:
+            email_sent = send_markdown_email(action, sku)
+    except Exception as e:
+        print(f"[Execute] Email failed: {e}")
+
     db.add(models.AuditLog(
         id=str(uuid.uuid4()),
         user_email="AI Agent",
         event_type="EXECUTE",
         entity_type="action",
         entity_id=action.id,
-        detail=f"Executed {action.type} for {action.sku.sku_code if action.sku else ''} — qty {action.recommended_qty}",
-        outcome="executed"
+        detail=f"Executed {action.type} for {sku.sku_code if sku else '—'} — qty {action.recommended_qty} — email {'sent' if email_sent else 'skipped (configure GMAIL_USER)'}",
+        outcome="executed",
+        meta={"email_sent": email_sent}
     ))
     db.commit()

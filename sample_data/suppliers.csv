@@ -1,6 +1,6 @@
 code,name,contact_email,avg_lead_time_days,on_time_delivery_rate,quality_rate,cost_variance_pct
-SUP-001,TechParts Ltd,orders@techparts.com,4.2,96.2,99.1,-2.1
-SUP-003,VisionTech Corp,supply@visiontech.com,6.8,91.8,98.5,0.4
-SUP-007,ErgoWorks Inc,procurement@ergoworks.com,7.1,88.4,97.2,1.2
-SUP-012,OldTech Supplies,sales@oldtech.com,11.3,77.0,94.8,3.8
-SUP-009,GlobalHub Co,orders@globalhub.com,9.5,82.3,96.4,0.8
+SUP-F001,LeatherPro Inc,orders@leatherpro.com,5.2,94.5,98.2,-1.5
+SUP-F002,RubberTech Ltd,supply@rubbertech.com,4.8,96.1,99.0,0.2
+SUP-F003,Stitching Supplies Co,contact@stitchingsupplies.com,6.5,91.3,97.5,1.1
+SUP-F004,SoleMakers LLC,info@solemakers.com,7.0,89.7,96.8,0.9
+SUP-F005,Heel & Toe Inc,orders@heelandtoe.com,5.5,93.2,98.7,-0.8
