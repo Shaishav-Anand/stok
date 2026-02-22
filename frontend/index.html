@@ -348,6 +348,21 @@
         <button class="btn-upload" style="margin-top:12px" onclick="uploadFile('suppliers')" id="btn-suppliers" disabled>Upload Suppliers</button>
       </div>
 
+      <div class="upload-card">
+        <div class="upload-title">5. SKU → Supplier Links</div>
+        <div class="upload-desc">Links each SKU to its supplier. AI picks the highest-ranked supplier automatically for each order.</div>
+        <div class="upload-cols">
+          <strong>Required:</strong> sku_code, supplier_code<br>
+          <strong>Optional:</strong> unit_cost, lead_time_days, moq, is_preferred (true/false)
+        </div>
+        <div class="file-drop" id="drop-sku-suppliers" onclick="document.getElementById('file-sku-suppliers').click()" ondragover="dragOver(event,'drop-sku-suppliers')" ondragleave="dragLeave('drop-sku-suppliers')" ondrop="handleDrop(event,'sku-suppliers')">
+          <input type="file" id="file-sku-suppliers" accept=".csv" onchange="handleFile(this,'sku-suppliers')"/>
+          <div class="file-drop-label" id="label-sku-suppliers">Drop CSV here or <strong>browse</strong></div>
+        </div>
+        <div class="upload-result" id="result-sku-suppliers"></div>
+        <button class="btn-upload" style="margin-top:12px" onclick="uploadFile('sku-suppliers')" id="btn-sku-suppliers" disabled>Upload SKU-Supplier Links</button>
+      </div>
+
     </div>
 
     <!-- Sample download -->
