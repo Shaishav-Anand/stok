@@ -18,7 +18,7 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
         return False
 
     payload = json.dumps({
-        "sender": {"name": "STOK Inventory", "email": "no-reply@stok-inventory.com"},
+        "sender": {"name": "STOK Inventory", "email": "anandshaishav@gmail.com"},
         "to": [{"email": to}],
         "subject": subject,
         "htmlContent": html_body
