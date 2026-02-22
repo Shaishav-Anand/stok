@@ -511,29 +511,77 @@ async function loadAudit() {
 async function approveAction(id) {
   const qtyInput = document.getElementById(`qty-${id}`);
   const qty = qtyInput ? parseInt(qtyInput.value) : null;
+
+  // Immediate UI feedback
+  const card = document.getElementById(`card-${id}`);
+  if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
+
   try {
     const res = await api(`/actions/${id}/approve`, {
       method: 'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({quantity_override: qty})
     });
-    if (!res) return;
-    const data = await res.json();
-    toast(`${data.outcome === 'modified' ? 'Modified &' : ''} Approved`, 'success');
-    refreshCurrentSection();
-  } catch(e) { toast('Failed to approve', 'error'); }
+    if (!res) { if(card){card.style.opacity='1';card.style.pointerEvents='';} return; }
+
+    if (!res.ok) {
+      const err = await res.json();
+      toast(err.detail || 'Already processed', 'error');
+      if(card){card.style.opacity='1';card.style.pointerEvents='';}
+      return;
+    }
+
+    toast('✓ Approved — check your email!', 'success');
+
+    if (card) {
+      card.classList.remove('urgent','high','normal');
+      card.classList.add('approved');
+      const controls = card.querySelector('.action-controls');
+      if (controls) controls.innerHTML = '<span class="status-tag tag-approved">✓ Approved</span>';
+      card.style.opacity = '0.6';
+      card.style.pointerEvents = 'none';
+    }
+
+  } catch(e) {
+    toast('Failed to approve — check connection', 'error');
+    if(card){card.style.opacity='1';card.style.pointerEvents='';}
+  }
 }
 
 async function rejectAction(id) {
   const reason = prompt('Reason for rejection (optional):') || '';
+
+  const card = document.getElementById(`card-${id}`);
+  if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
+
   try {
     const res = await api(`/actions/${id}/reject`, {
       method: 'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({reason})
     });
-    if (!res) return;
-    toast('Action rejected', 'info');
-    refreshCurrentSection();
-  } catch(e) { toast('Failed to reject', 'error'); }
+    if (!res) { if(card){card.style.opacity='1';card.style.pointerEvents='';} return; }
+
+    if (!res.ok) {
+      const err = await res.json();
+      toast(err.detail || 'Already processed', 'error');
+      if(card){card.style.opacity='1';card.style.pointerEvents='';}
+      return;
+    }
+
+    toast('✕ Action rejected', 'info');
+
+    if (card) {
+      card.classList.remove('urgent','high','normal');
+      card.classList.add('rejected');
+      const controls = card.querySelector('.action-controls');
+      if (controls) controls.innerHTML = '<span class="status-tag tag-rejected">✕ Rejected</span>';
+      card.style.opacity = '0.35';
+      card.style.pointerEvents = 'none';
+    }
+
+  } catch(e) {
+    toast('Failed to reject', 'error');
+    if(card){card.style.opacity='1';card.style.pointerEvents='';}
+  }
 }
 
 async function runAgent() {
