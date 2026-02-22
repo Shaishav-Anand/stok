@@ -358,6 +358,7 @@
         <button class="btn-detail btn" onclick="downloadSample('sales')">↓ sales_template.csv</button>
         <button class="btn-detail btn" onclick="downloadSample('inventory')">↓ inventory_template.csv</button>
         <button class="btn-detail btn" onclick="downloadSample('suppliers')">↓ suppliers_template.csv</button>
+        <button class="btn-detail btn" onclick="downloadSample('sku-suppliers')">↓ sku_suppliers_template.csv</button>
       </div>
     </div>
   </div>
@@ -806,6 +807,7 @@ function downloadSample(type) {
     skus: 'sku_code,name,category,unit_cost,unit_price,reorder_point,safety_stock,lead_time_days,moq\nSKU-001,Product Name,Category,10.00,25.99,20,10,7,10',
     sales: 'sku_code,date,quantity_sold,revenue,channel\nSKU-001,2024-01-01,5,129.95,online',
     inventory: 'sku_code,quantity,location\nSKU-001,150,Warehouse A',
+    'sku-suppliers': 'sku_code,supplier_code,unit_cost,lead_time_days,moq,is_preferred\nSKU-001,SUP-001,12.00,5,10,true',
     suppliers: 'code,name,contact_email,avg_lead_time_days,on_time_delivery_rate,quality_rate,cost_variance_pct\nSUP-001,Supplier Name,orders@supplier.com,7,90,98,1.5'
   };
   const blob = new Blob([templates[type]], {type:'text/csv'});
