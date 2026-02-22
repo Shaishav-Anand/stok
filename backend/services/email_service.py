@@ -1,6 +1,6 @@
 """
-Email Service — uses Resend API (free tier: 100 emails/day)
-No phone verification needed. Works on Render free tier.
+Email Service — uses Brevo (Sendinblue) API
+Free tier: 300 emails/day. No phone needed. Works on Render free tier.
 """
 import urllib.request
 import urllib.error
@@ -8,30 +8,29 @@ import json
 import os
 from datetime import datetime
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
 MANAGER_EMAIL = os.getenv("MANAGER_EMAIL", "anandshaishav@gmail.com")
-FROM_EMAIL = "onboarding@resend.dev"  # Resend's default sender (works without domain)
 
 
 def send_email(to: str, subject: str, html_body: str) -> bool:
-    """Send email via Resend API. Returns True if successful."""
-    if not RESEND_API_KEY:
-        print(f"[Email] Skipping — RESEND_API_KEY not set")
+    if not BREVO_API_KEY:
+        print("[Email] Skipping — BREVO_API_KEY not set")
         return False
 
     payload = json.dumps({
-        "from": f"STOK Inventory <{FROM_EMAIL}>",
-        "to": [to],
+        "sender": {"name": "STOK Inventory", "email": "no-reply@stok-inventory.com"},
+        "to": [{"email": to}],
         "subject": subject,
-        "html": html_body
+        "htmlContent": html_body
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        "https://api.resend.com/emails",
+        "https://api.brevo.com/v3/smtp/email",
         data=payload,
         headers={
-            "Authorization": f"Bearer {RESEND_API_KEY}",
-            "Content-Type": "application/json"
+            "api-key": BREVO_API_KEY,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         },
         method="POST"
     )
@@ -42,7 +41,7 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
             return True
     except urllib.error.HTTPError as e:
         body = e.read().decode()
-        print(f"[Email] Resend error {e.code}: {body}")
+        print(f"[Email] Brevo error {e.code}: {body}")
         return False
     except Exception as e:
         print(f"[Email] Failed: {e}")
