@@ -843,7 +843,7 @@ function openDetail(id) {
 }
 
 function closeModal() {
-  document.getElementById('modal-overlay').style.display = 'none';
+  document.getElementById('modal-overlay').classList.remove('open');
   document.getElementById('modal-body').innerHTML = '';
 }
 
