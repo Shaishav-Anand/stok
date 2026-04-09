@@ -474,9 +474,10 @@ async function api(path, options = {}) {
 
 async function loadDashboard() {
   try {
-    const [statsRes, actionsRes] = await Promise.all([
+    const [statsRes, actionsRes, invRes] = await Promise.all([
       api('/stats/dashboard'),
-      api('/actions/?status=pending')
+      api('/actions/?status=pending'),
+      api('/inventory/')
     ]);
     if (!statsRes || !actionsRes) return;
     const stats = await statsRes.json();
@@ -485,7 +486,30 @@ async function loadDashboard() {
     renderStats(stats);
     renderUrgentActions(actions);
     updatePendingBadge(actions.length);
+
+    // Compute AI accuracy from forecasts
+    if (invRes) {
+      const invData = await invRes.json();
+      computeAndShowAccuracy(invData);
+    }
   } catch(e) { toast('Failed to load dashboard', 'error'); }
+}
+
+async function computeAndShowAccuracy(skus) {
+  try {
+    // Fetch forecasts for up to 5 SKUs and average accuracy
+    const sample = skus.slice(0, 5);
+    const forecasts = await Promise.all(
+      sample.map(s => api(`/forecast/${s.sku_id}`).then(r => r ? r.json() : null))
+    );
+    const accuracies = forecasts
+      .filter(f => f && f.accuracy_pct != null)
+      .map(f => f.accuracy_pct);
+    if (accuracies.length > 0) {
+      const avg = (accuracies.reduce((a,b) => a+b, 0) / accuracies.length).toFixed(1);
+      document.getElementById('s-accuracy').textContent = avg + '%';
+    }
+  } catch(e) { console.log('Accuracy fetch failed', e); }
 }
 
 async function loadActions() {
@@ -505,6 +529,63 @@ async function loadInventory() {
     const data = await res.json();
     renderInventory(data);
   } catch(e) { toast('Failed to load inventory', 'error'); }
+}
+
+async function showSkuDetail(skuId, skuCode, skuName) {
+  // Show forecast modal for this SKU
+  try {
+    const res = await api(`/forecast/${skuId}`);
+    if (!res) return;
+    const data = await res.json();
+    const fc = data.forecast_json || {};
+    const accuracy = data.accuracy_pct ? `${data.accuracy_pct}%` : 'N/A';
+    const model = data.model_used || 'N/A';
+
+    // Build forecast table
+    const forecastRows = (fc.forecast || []).slice(0, 7).map(f =>
+      `<tr>
+        <td style="padding:6px 12px;color:var(--muted)">${f.date}</td>
+        <td style="padding:6px 12px;font-weight:600;color:var(--accent)">${f.value}</td>
+        <td style="padding:6px 12px;color:var(--muted);font-size:12px">${f.lower} – ${f.upper}</td>
+      </tr>`
+    ).join('');
+
+    const modal = document.getElementById('modal-overlay');
+    const modalBody = document.getElementById('modal-body');
+    modalBody.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <div style="font-size:12px;color:var(--accent3);font-weight:600">${skuCode}</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text)">${skuName}</div>
+        </div>
+        <button onclick="closeModal()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer">✕ Close</button>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:20px">
+        <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">MODEL</div>
+          <div style="font-size:16px;font-weight:700;color:var(--accent)">${model}</div>
+        </div>
+        <div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">ACCURACY</div>
+          <div style="font-size:16px;font-weight:700;color:var(--accent)">${accuracy}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">7-DAY DEMAND FORECAST</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--surface)">
+            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted)">DATE</th>
+            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted)">FORECAST</th>
+            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted)">RANGE</th>
+          </tr>
+        </thead>
+        <tbody>${forecastRows || '<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--muted)">No forecast data yet — run agent first</td></tr>'}</tbody>
+      </table>
+    `;
+    modal.style.display = 'flex';
+  } catch(e) {
+    toast('Could not load forecast', 'error');
+  }
 }
 
 async function loadSuppliers() {
@@ -694,7 +775,7 @@ function renderInventory(skus) {
   tb.innerHTML = skus.map(sku => {
     const pct = Math.min(100, (sku.current_stock / ((sku.reorder_point||20) * 4)) * 100);
     const fill = riskColor[sku.risk_level];
-    return `<tr>
+    return `<tr style="cursor:pointer" onclick="showSkuDetail('${sku.sku_id}','${sku.sku_code}','${sku.name}')">
       <td style="color:var(--accent3);font-weight:500">${sku.sku_code}</td>
       <td>${sku.name}</td>
       <td style="color:var(--muted)">${sku.category||'—'}</td>
