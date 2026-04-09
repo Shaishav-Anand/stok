@@ -57,3 +57,10 @@ def authenticate_user(db: Session, email: str, password: str):
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
+@router.delete("/reset-users")
+def reset_all_users(db: Session = Depends(get_db)):
+    """Delete all users — no auth required since you might be locked out."""
+    from sqlalchemy import text
+    db.execute(text("DELETE FROM users"))
+    db.commit()
+    return {"message": "All users deleted. Register a fresh account now."}
