@@ -174,6 +174,19 @@ agent_router = APIRouter(prefix="/agent", tags=["agent"])
 
 @agent_router.post("/run")
 def trigger_agent(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Manually trigger the AI agent scan"""
+    """Manually trigger the AI agent scan + pre-compute all forecasts"""
     count = run_agent(db)
+    
+    # Pre-compute forecasts for all SKUs so accuracy shows immediately
+    try:
+        from services.forecasting import get_forecast_for_sku
+        skus = db.query(models.SKU).filter(models.SKU.is_active == True).all()
+        for sku in skus:
+            try:
+                get_forecast_for_sku(sku.id, db)
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"[Agent] Forecast pre-computation failed: {e}")
+    
     return {"message": f"Agent completed. {count} new actions generated."}

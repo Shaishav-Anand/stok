@@ -842,7 +842,10 @@ function openDetail(id) {
   document.getElementById('modal-overlay').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+  document.getElementById('modal-body').innerHTML = '';
+}
 
 // ── CSV UPLOAD ────────────────────────────────────────────────────
 function handleFile(input, type) {
