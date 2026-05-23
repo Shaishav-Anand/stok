@@ -506,6 +506,7 @@ function showApp() {
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('user-badge').textContent = currentUser?.email || '';
   loadDashboard();
+}
 
 // ── Admin Panel ────────────────────────────────────────────
 const ADMIN_PASSWORD = 'Stok@Admin2024';
@@ -581,7 +582,7 @@ async function adminRunAgent() {
     el.textContent = '✗ Failed';
   }
 }
-}
+
 
 // ── API CALLS ────────────────────────────────────────────────────
 async function api(path, options = {}) {
