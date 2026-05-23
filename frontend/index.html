@@ -217,6 +217,7 @@
     <button class="tab" onclick="showSection('suppliers')">Suppliers</button>
     <button class="tab" onclick="showSection('upload')">Upload CSV</button>
     <button class="tab" onclick="showSection('audit')">Audit Log</button>
+    <button class="tab" onclick="showSection('admin')" style="color:var(--danger)">⚙ Admin</button>
   </div>
   <div class="header-right">
     <div class="agent-status"><div class="status-dot"></div>AI Agent Active</div>
@@ -281,6 +282,51 @@
   </div>
 
   <!-- UPLOAD CSV -->
+  <div class="section" id="section-admin">
+    <div class="section-header"><div class="section-title">Admin Panel</div></div>
+    <div id="admin-auth" style="max-width:400px;margin:40px auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px">
+      <div style="font-size:14px;font-weight:600;color:var(--muted);margin-bottom:16px">ADMIN ACCESS</div>
+      <input type="password" id="admin-pin" placeholder="Enter admin password" style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;box-sizing:border-box;margin-bottom:12px"/>
+      <button onclick="verifyAdmin()" style="width:100%;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:14px">Unlock Admin Panel</button>
+      <div id="admin-auth-error" style="color:var(--danger);font-size:12px;margin-top:8px;display:none">Wrong password</div>
+    </div>
+    <div id="admin-panel" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:800px">
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">RESET INVENTORY DATA</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Deletes all SKUs, sales, inventory, actions, suppliers. Keeps user accounts.</div>
+          <button onclick="adminResetData()" style="width:100%;padding:10px;background:var(--warn);color:var(--bg);border:none;border-radius:6px;font-weight:700;cursor:pointer">Reset All Data</button>
+          <div id="reset-data-result" style="margin-top:8px;font-size:12px"></div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px">
+          <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:8px">DELETE ALL USERS</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Deletes all user accounts. You will be logged out. Register fresh account after.</div>
+          <button onclick="adminResetUsers()" style="width:100%;padding:10px;background:var(--danger);color:white;border:none;border-radius:6px;font-weight:700;cursor:pointer">Delete All Users</button>
+          <div id="reset-users-result" style="margin-top:8px;font-size:12px"></div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">CREATE NEW USER</div>
+          <input type="text" id="new-user-name" placeholder="Name" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;box-sizing:border-box;margin-bottom:8px"/>
+          <input type="email" id="new-user-email" placeholder="Email" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;box-sizing:border-box;margin-bottom:8px"/>
+          <input type="password" id="new-user-pass" placeholder="Password" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;box-sizing:border-box;margin-bottom:8px"/>
+          <button onclick="adminCreateUser()" style="width:100%;padding:10px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;font-weight:700;cursor:pointer">Create User</button>
+          <div id="create-user-result" style="margin-top:8px;font-size:12px"></div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">RUN AI AGENT</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Manually trigger agent scan + pre-compute all forecasts.</div>
+          <button onclick="adminRunAgent()" style="width:100%;padding:10px;background:var(--accent2);color:white;border:none;border-radius:6px;font-weight:700;cursor:pointer">Run Agent Now</button>
+          <div id="run-agent-result" style="margin-top:8px;font-size:12px"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <div class="section" id="section-upload">
     <div class="section-header"><div class="section-title">Upload CSV Data</div></div>
     <div class="upload-grid">
@@ -460,6 +506,81 @@ function showApp() {
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('user-badge').textContent = currentUser?.email || '';
   loadDashboard();
+
+// ── Admin Panel ────────────────────────────────────────────
+const ADMIN_PASSWORD = 'Stok@Admin2024';
+
+function verifyAdmin() {
+  const pin = document.getElementById('admin-pin').value;
+  if (pin === ADMIN_PASSWORD) {
+    document.getElementById('admin-auth').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+  } else {
+    document.getElementById('admin-auth-error').style.display = 'block';
+  }
+}
+
+async function adminResetData() {
+  if (!confirm('Reset ALL inventory data? This cannot be undone.')) return;
+  const res = await api('/auth/reset-all', { method: 'DELETE' });
+  const el = document.getElementById('reset-data-result');
+  if (res && res.ok) {
+    el.style.color = 'var(--accent)';
+    el.textContent = '✓ All data cleared successfully';
+  } else {
+    el.style.color = 'var(--danger)';
+    el.textContent = '✗ Failed — check console';
+  }
+}
+
+async function adminResetUsers() {
+  if (!confirm('Delete ALL users? You will be logged out!')) return;
+  const res = await fetch(`${API_BASE}/auth/reset-users`, { method: 'DELETE' });
+  const el = document.getElementById('reset-users-result');
+  if (res.ok) {
+    el.style.color = 'var(--accent)';
+    el.textContent = '✓ All users deleted — register fresh account';
+    setTimeout(() => { localStorage.clear(); location.reload(); }, 2000);
+  } else {
+    el.style.color = 'var(--danger)';
+    el.textContent = '✗ Failed';
+  }
+}
+
+async function adminCreateUser() {
+  const name = document.getElementById('new-user-name').value;
+  const email = document.getElementById('new-user-email').value;
+  const pass = document.getElementById('new-user-pass').value;
+  const el = document.getElementById('create-user-result');
+  if (!email || !pass) { el.style.color='var(--danger)'; el.textContent='Email and password required'; return; }
+  const res = await fetch(`${API_BASE}/auth/register?name=${encodeURIComponent(name)}`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password: pass })
+  });
+  if (res.ok) {
+    el.style.color = 'var(--accent)';
+    el.textContent = `✓ User ${email} created`;
+  } else {
+    const data = await res.json();
+    el.style.color = 'var(--danger)';
+    el.textContent = `✗ ${data.detail || 'Failed'}`;
+  }
+}
+
+async function adminRunAgent() {
+  const el = document.getElementById('run-agent-result');
+  el.style.color = 'var(--muted)';
+  el.textContent = 'Running...';
+  const res = await api('/agent/run', { method: 'POST' });
+  if (res && res.ok) {
+    const data = await res.json();
+    el.style.color = 'var(--accent)';
+    el.textContent = `✓ ${data.message}`;
+  } else {
+    el.style.color = 'var(--danger)';
+    el.textContent = '✗ Failed';
+  }
+}
 }
 
 // ── API CALLS ────────────────────────────────────────────────────
@@ -842,10 +963,7 @@ function openDetail(id) {
   document.getElementById('modal-overlay').classList.add('open');
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.getElementById('modal-body').innerHTML = '';
-}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // ── CSV UPLOAD ────────────────────────────────────────────────────
 function handleFile(input, type) {
@@ -936,6 +1054,11 @@ function refreshCurrentSection() {
   if (currentSection==='dashboard') loadDashboard();
   else if (currentSection==='actions') loadActions();
   else if (currentSection==='audit') loadAudit();
+  else if (currentSection==='admin') {
+    document.getElementById('admin-auth').style.display = 'block';
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('admin-pin').value = '';
+  }
 }
 
 function updatePendingBadge(n) {
