@@ -554,7 +554,7 @@ async function adminCreateUser() {
   const pass = document.getElementById('new-user-pass').value;
   const el = document.getElementById('create-user-result');
   if (!email || !pass) { el.style.color='var(--danger)'; el.textContent='Email and password required'; return; }
-  const res = await fetch(`${API_BASE}/auth/register?name=${encodeURIComponent(name)}`, {
+  const res = await fetch(`${API}/auth/register?name=${encodeURIComponent(name)}`, {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ email, password: pass })
   });
