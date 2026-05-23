@@ -55,3 +55,11 @@ def reset_all_data(
         db.execute(text(f"DELETE FROM {table}"))
     db.commit()
     return {"message": "All data cleared. You can now upload fresh CSVs."}
+
+@router.delete("/reset-users")
+def reset_all_users(db: Session = Depends(get_db)):
+    """Delete all users. No auth required."""
+    from sqlalchemy import text
+    db.execute(text("DELETE FROM users"))
+    db.commit()
+    return {"message": "All users deleted. Register fresh account now."}
