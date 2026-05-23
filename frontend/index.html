@@ -536,7 +536,7 @@ async function adminResetData() {
 
 async function adminResetUsers() {
   if (!confirm('Delete ALL users? You will be logged out!')) return;
-  const res = await fetch(`${API_BASE}/auth/reset-users`, { method: 'DELETE' });
+  const res = await fetch(`${API}/auth/reset-users`, { method: 'DELETE' });
   const el = document.getElementById('reset-users-result');
   if (res.ok) {
     el.style.color = 'var(--accent)';
