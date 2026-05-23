@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from datetime import datetime, timedelta
 from database import get_db
 from services.auth import get_current_user
@@ -19,7 +20,6 @@ def get_inventory(db: Session = Depends(get_db), current_user: models.User = Dep
         inv = db.query(models.Inventory).filter(models.Inventory.sku_id == sku.id).first()
         current_stock = inv.quantity if inv else 0
 
-        # Get 30-day velocity
         cutoff = datetime.utcnow() - timedelta(days=30)
         sales = db.query(models.SalesHistory).filter(
             models.SalesHistory.sku_id == sku.id,
@@ -30,20 +30,18 @@ def get_inventory(db: Session = Depends(get_db), current_user: models.User = Dep
 
         days_remaining = (current_stock / velocity) if velocity > 0 else None
 
-        # Risk level
         if days_remaining is not None:
             if days_remaining <= sku.lead_time_days:
                 risk = "critical"
             elif days_remaining <= sku.lead_time_days * 2:
                 risk = "high"
             elif current_stock > sku.reorder_point * 5 and velocity < 0.2:
-                risk = "medium"  # slow mover
+                risk = "medium"
             else:
                 risk = "low"
         else:
             risk = "low"
 
-        # Trend (last 8 days)
         trend_sales = db.query(models.SalesHistory).filter(
             models.SalesHistory.sku_id == sku.id,
             models.SalesHistory.date >= datetime.utcnow() - timedelta(days=8)
@@ -97,16 +95,16 @@ def get_audit(
 # ── Forecast ───────────────────────────────────────────────────
 forecast_router = APIRouter(prefix="/forecast", tags=["forecast"])
 
-@forecast_router.get("/{sku_code}", response_model=schemas.ForecastOut)
+@forecast_router.get("/{sku_id}", response_model=schemas.ForecastOut)
 def get_sku_forecast(
-    sku_code: str,
+    sku_id: str,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    sku = db.query(models.SKU).filter(models.SKU.sku_code == sku_code).first()
+    sku = db.query(models.SKU).filter(models.SKU.id == sku_id).first()
     if not sku:
         from fastapi import HTTPException
-        raise HTTPException(404, f"SKU {sku_code} not found")
+        raise HTTPException(404, f"SKU {sku_id} not found")
 
     result = get_forecast(sku.id, db)
     fc = result["forecast_json"]
@@ -131,10 +129,26 @@ def get_dashboard_stats(db: Session = Depends(get_db), current_user: models.User
     pending_actions = db.query(models.PendingAction).filter(models.PendingAction.status == "pending").all()
     pending_value = sum(a.recommended_value or 0 for a in pending_actions if a.type == "order")
 
-    # Count risk levels by scanning inventory
-    critical = high = slow_movers = slow_value = 0
-    skus = db.query(models.SKU).filter(models.SKU.is_active == True).all()
+    # Stockout risk — direct DB query
+    critical = db.query(models.PendingAction).filter(
+        and_(
+            models.PendingAction.status == "pending",
+            models.PendingAction.type == "order",
+            models.PendingAction.priority == "urgent"
+        )
+    ).count()
 
+    high = db.query(models.PendingAction).filter(
+        and_(
+            models.PendingAction.status == "pending",
+            models.PendingAction.type == "order",
+            models.PendingAction.priority == "high"
+        )
+    ).count()
+
+    # Slow movers
+    slow_movers = slow_value = 0
+    skus = db.query(models.SKU).filter(models.SKU.is_active == True).all()
     for sku in skus:
         inv = db.query(models.Inventory).filter(models.Inventory.sku_id == sku.id).first()
         stock = inv.quantity if inv else 0
@@ -145,10 +159,6 @@ def get_dashboard_stats(db: Session = Depends(get_db), current_user: models.User
         ).all()
         sales_df = pd.DataFrame([{"date": s.date, "quantity_sold": s.quantity_sold} for s in sales])
         v = compute_daily_velocity(sales_df)
-        if v > 0:
-            days = stock / v
-            if days <= sku.lead_time_days: critical += 1
-            elif days <= sku.lead_time_days * 2: high += 1
         if v < 0.1 and stock > 50:
             slow_movers += 1
             slow_value += stock * (sku.unit_cost or 0)
@@ -176,8 +186,8 @@ agent_router = APIRouter(prefix="/agent", tags=["agent"])
 def trigger_agent(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Manually trigger the AI agent scan + pre-compute all forecasts"""
     count = run_agent(db)
-    
-    # Pre-compute forecasts for all SKUs so accuracy shows immediately
+
+    # Pre-compute forecasts for all SKUs
     try:
         from services.forecasting import get_forecast_for_sku
         skus = db.query(models.SKU).filter(models.SKU.is_active == True).all()
@@ -188,5 +198,23 @@ def trigger_agent(db: Session = Depends(get_db), current_user: models.User = Dep
                 pass
     except Exception as e:
         print(f"[Agent] Forecast pre-computation failed: {e}")
-    
+
     return {"message": f"Agent completed. {count} new actions generated."}
+
+
+# ── Market Data ────────────────────────────────────────────────
+market_router = APIRouter(prefix="/market", tags=["market"])
+
+@market_router.get("/context")
+def get_market(current_user: models.User = Depends(get_current_user)):
+    from services.market_data import get_market_context
+    return get_market_context()
+
+
+# ── Feedback Weights ───────────────────────────────────────────
+feedback_router = APIRouter(prefix="/feedback", tags=["feedback"])
+
+@feedback_router.get("/weights")
+def get_weights(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    from services.feedback import compute_feedback_weights
+    return compute_feedback_weights(db)
